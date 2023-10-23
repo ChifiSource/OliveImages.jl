@@ -1,9 +1,12 @@
 module OliveImages
 using Olive
 using Images
+using ImageIO
+using FileIO
 using Olive.Toolips
 using Olive.ToolipsSession
 using Olive.ToolipsDefaults
+using Olive.ToolipsBase64
 using Olive: getname, Project, Directory, Cell
 import Olive: build, olive_read
 
@@ -32,14 +35,15 @@ function build(c::Connection, cell::Cell{:png}, d::Directory{<:Any})
 end
 
 function olive_read(cell::Cell{:png})
-    img = Images.read(cell.outputs)
+    img = img_obj = load(cell.outputs)
     Vector{Cell{<:Any}}([Cell(1, "image", "png", img)])::Vector{Cell{<:Any}}
 end
 
 function build(c::Connection, cm::ComponentModifier, cell::Cell{:image}, proj::Project{<:Any})
     newdiv = div("cellcontainer$(cell.id)")
     style!(newdiv, "padding" => 12px, "border-radius" => 0px)
-    newdiv[:text] = cell.source
+    img = base64img("cell$(cell.id)", cell.outputs, cell.source)
+    push!(newdiv, img)
     newdiv::Component{:div}
 end
 
