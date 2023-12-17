@@ -10,4 +10,4 @@ Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 Olive = "724ecaf6-c7a0-4c22-b37e-0bb7b4193da8"
 
 [compat]
-Olive = "0.0.92-0.0.99"
+Olive = "0.0.9"
