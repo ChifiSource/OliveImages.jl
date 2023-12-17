@@ -11,7 +11,7 @@ Olive = "724ecaf6-c7a0-4c22-b37e-0bb7b4193da8"
 
 [compat]
 julia = "1.5"
-Olive = "0.0.9"
+Olive = "0.0.91"
 FileIO = "1.16"
 ImageIO = "1.6"
 Images = "0.26"
