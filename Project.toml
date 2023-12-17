@@ -1,7 +1,7 @@
 name = "OliveImages"
 uuid = "d5c9dd0d-5678-4538-8542-c68b20ea893d"
 authors = ["emmac "]
-version = "0.1.0"
+version = "0.0.9"
 
 [deps]
 FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
