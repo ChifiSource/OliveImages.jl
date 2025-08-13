@@ -1,5 +1,5 @@
 <div align="center">
-<img src="https://github.com/ChifiSource/image_dump/blob/main/olive/oliveimages.png" /img>
+<img src="https://github.com/ChifiSource/image_dump/raw/main/olive/0.1/extensions/oliveimages.png" /img>
 </div>
 
 The `OliveImages` module provides [Olive](https://github.com/ChifiSource/Olive.jl) with the ability to read and work with image files, including
