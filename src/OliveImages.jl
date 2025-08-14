@@ -57,6 +57,19 @@ function olive_read(cell::Cell{:jpg})
     Vector{Cell{<:Any}}([Cell{:image}("jpg", cell.source => img)])::Vector{Cell{<:Any}}
 end
 
+function base64_to_image(b64str, fmt::String = "PNG")
+    data = Components.base64decode(b64str)
+    io = IOBuffer(data)
+    return load(Stream{DataFormat{Symbol(fmt)}}(io))
+end
+
+function image_to_base64(img, fmt::String = "PNG")
+    io = IOBuffer()
+    save(Stream{DataFormat{Symbol(fmt)}}(io), img) # save in memory stream
+    seekstart(io)
+    return Components.base64encode(take!(io))
+end
+
 #== session cells
 ==#
 
@@ -70,6 +83,8 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:vimage}, proj::
     newdiv::Component{:div}
 end
 
+# base64_to_image(replace(img[:src], "data:image/png;base64," => ""))
+
 function build(c::Connection, cm::ComponentModifier, cell::Cell{:image}, proj::Project{<:Any})
     newdiv = div("cellcontainer$(cell.id)")
     style!(newdiv, "padding" => 20px, "border-radius" => 0px)
@@ -77,7 +92,6 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:image}, proj::P
         push!(newdiv, build_image_bar(c, cm, cell, proj))
         return(newdiv)
     end
-
     img = base64img("cell$(cell.id)", cell.outputs[2])
     on(c, newdiv, "dblclick") do cm::ComponentModifier
         if "imgbar$(cell.id)" in cm
@@ -97,9 +111,18 @@ build_image_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection
     icon
 end
 
+build_image_cell_button(oe::Type{OliveExtension{:resize}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project) = begin
+    icon = Olive.topbar_icon("openimg$(cell.id)", "resize")
+    style!(icon, "font-size" => 16pt, "color" => "white")
+    icon
+end
+
+
 
 build_vimage_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project) = begin
-    a(text = "hello")
+    icon = Olive.topbar_icon("openimg$(cell.id)", "file_open")
+    style!(icon, "font-size" => 16pt, "color" => "white")
+    icon
 end
 
 function build_imagecellcontrols(c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project)
