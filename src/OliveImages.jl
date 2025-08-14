@@ -30,8 +30,8 @@ function build(c::Connection, cell::Cell{:png}, d::Directory{<:Any})
 end
 
 function olive_read(cell::Cell{:png})
-    img = img_obj = load(cell.outputs)
-    Vector{Cell{<:Any}}([Cell{:image}("png", cell.source => img)])::Vector{Cell{<:Any}}
+    img = load(cell.outputs)
+    Vector{Cell{<:Any}}([Cell{:image}("PNG", cell.source => img)])::Vector{Cell{<:Any}}
 end
 
 
@@ -43,7 +43,7 @@ end
 
 function olive_read(cell::Cell{:gif})
     img = load(cell.outputs)
-    Vector{Cell{<:Any}}([Cell{:image}("gif", cell.source => img)])::Vector{Cell{<:Any}}
+    Vector{Cell{<:Any}}([Cell{:image}("GIF", cell.source => img)])::Vector{Cell{<:Any}}
 end
 
 function build(c::Connection, cell::Cell{:jpg}, d::Directory{<:Any})
@@ -54,7 +54,7 @@ end
 
 function olive_read(cell::Cell{:jpg})
     img = load(cell.outputs)
-    Vector{Cell{<:Any}}([Cell{:image}("jpg", cell.source => img)])::Vector{Cell{<:Any}}
+    Vector{Cell{<:Any}}([Cell{:image}("JPG", cell.source => img)])::Vector{Cell{<:Any}}
 end
 
 function base64_to_image(b64str, fmt::String = "PNG")
@@ -88,11 +88,16 @@ end
 function build(c::Connection, cm::ComponentModifier, cell::Cell{:image}, proj::Project{<:Any})
     newdiv = div("cellcontainer$(cell.id)")
     style!(newdiv, "padding" => 20px, "border-radius" => 0px)
-    if typeof(cell.outputs) == AbstractString
-        push!(newdiv, build_image_bar(c, cm, cell, proj))
-        return(newdiv)
+    if typeof(cell.outputs) <: AbstractString
+        if cell.outputs == ""
+            push!(newdiv, build_image_bar(c, cm, cell, proj))
+            return(newdiv)
+        end
+        outp_splits = split(cell.outputs, "!|")
+        cell.outputs = string(outp_splits[1]) => base64_to_image(outp_splits[2])
+        cell.source = replace(cell.source, "# " => "")
     end
-    img = base64img("cell$(cell.id)", cell.outputs[2])
+    img = base64img("cell$(cell.id)", cell.outputs[2], lowercase(cell.source))
     on(c, newdiv, "dblclick") do cm::ComponentModifier
         if "imgbar$(cell.id)" in cm
             remove!(cm, "imgbar$(cell.id)")
@@ -105,19 +110,33 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:image}, proj::P
     newdiv::Component{:div}
 end
 
-build_image_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project) = begin
-    icon = Olive.topbar_icon("openimg$(cell.id)", "file_open")
+function buildbase_imgcell_button(name::AbstractString, cellid::String, icon::String)
+    icon = Olive.topbar_icon("$name$cellid", icon)
     style!(icon, "font-size" => 16pt, "color" => "white")
+    icon::Component{:span}
+end
+
+function build_fileseeker()
+
+end
+
+build_image_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project) = begin
+    cellid::String = cell.id
+    icon = buildbase_imgcell_button("openimg", cellid, "file_open")
+    on(c, icon, "click") do cm::ComponentModifier
+        set_children!(cm, "imgbar$cellid", )
+    end
     icon
 end
 
 build_image_cell_button(oe::Type{OliveExtension{:resize}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project) = begin
-    icon = Olive.topbar_icon("openimg$(cell.id)", "resize")
+    icon = buildbase_imgcell_button("resimg", cell.id, "settings_overscan")
+    on(c, icon, "click") do cm::ComponentModifier
+
+    end
     style!(icon, "font-size" => 16pt, "color" => "white")
     icon
 end
-
-
 
 build_vimage_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project) = begin
     icon = Olive.topbar_icon("openimg$(cell.id)", "file_open")
@@ -167,6 +186,14 @@ function build_image_bar(c::AbstractConnection, cm::Components.AbstractComponent
     style!(bar, "padding" => .5percent, "border-bottom-left-radius" => 0px, "border-bottom-left-radius" => 0px, "background-color" => "#1e1e1e", "border-radius" => 2px, 
     "border-bottom" => "black")
     bar::Component{:div}
+end
+
+string(cell::Cell{:image}) = begin
+
+end
+
+string(cell::Cell{:vimage}) = begin
+
 end
 
 end # module OliveImages
