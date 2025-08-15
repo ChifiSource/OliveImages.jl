@@ -1,3 +1,45 @@
+"""
+Created in August, 2025 by
+[chifi - an open source software dynasty.](https://github.com/orgs/ChifiSource)
+- This software is MIT-licensed.
+### OliveImages
+`OliveImages` provides `Olive` with the ability to read and display image files. Image display 
+is courtesy of the `:image` and `:vimage` session cells, 
+cells which are meant to present an image as a cell. This package also establishes 
+an extensible method system for adding new image controls (see `build_image_cell_button`).
+##### bindings
+```julia
+# file cells:
+build(c::Connection, cell::Cell{:svg}, d::Directory{<:Any})
+olive_read(cell::Cell{:svg})
+build(c::Connection, cell::Cell{:png}, d::Directory{<:Any})
+olive_read(cell::Cell{:png})
+build(c::Connection, cell::Cell{:gif}, d::Directory{<:Any})
+olive_read(cell::Cell{:gif})
+build(c::Connection, cell::Cell{:jpg}, d::Directory{<:Any})
+olive_read(cell::Cell{:jpg})
+
+# session cells:
+build(c::Connection, cm::ComponentModifier, cell::Cell{:vimage}, proj::Project{<:Any})
+build(c::Connection, cm::ComponentModifier, cell::Cell{:image}, proj::Project{<:Any})
+string(cell::Cell{:image})
+string(cell::Cell{:vimage})
+
+# extensible `OliveImages` functions:
+build_image_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project)
+build_vimage_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project)
+build_image_cell_button(oe::Type{OliveExtension{:resize}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project)
+
+# `OliveImages` internal functions:
+base64_to_image(b64str, fmt::String = "PNG")
+image_to_base64(img, fmt::String = "PNG")
+buildbase_imgcell_button(name::AbstractString, cellid::String, icon::String)
+image_detail_edit(c::AbstractConnection, cell::Cell{:image}, proj::Olive.Project)
+build_imagecellcontrols(c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project)
+build_image_bar(c::AbstractConnection, cm::Components.AbstractComponentModifier, cell::Cell{:vimage}, proj::Olive.Project)
+build_image_bar(c::AbstractConnection, cm::Components.AbstractComponentModifier, cell::Cell{:image}, proj::Olive.Project)
+```
+"""
 module OliveImages
 using Olive
 using Images
@@ -82,8 +124,6 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:vimage}, proj::
     newdiv::Component{:div}
 end
 
-# base64_to_image(replace(img[:src], "data:image/png;base64," => ""))
-
 function build(c::Connection, cm::ComponentModifier, cell::Cell{:image}, proj::Project{<:Any})
     newdiv = div("cellcontainer$(cell.id)", align = cell.outputs[4])
     style!(newdiv, "padding" => 20px, "border-radius" => 0px)
@@ -93,7 +133,7 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:image}, proj::P
             return(newdiv)
         end
         outp_splits = split(cell.outputs, "!|")
-        cell.outputs = string(outp_splits[1]) => base64_to_image(outp_splits[2])
+        cell.outputs = [string(outp_splits[1]), base64_to_image(outp_splits[2]), outp_splits[3], outp_spluts[4]]
         cell.source = replace(cell.source, "# " => "")
     end
     img = base64img("cell$(cell.id)", cell.outputs[2], lowercase(cell.source))
@@ -106,6 +146,24 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:image}, proj::P
         newbar = build_image_bar(c, cm, cell, proj)
         insert!(cm, "cellcontainer$(cell.id)", 1, newbar)
     end
+    push!(newdiv, img)
+    newdiv::Component{:div}
+end
+
+function build(c::Connection, cm::ComponentModifier, cell::Cell{:imagero}, proj::Project{<:Any})
+    newdiv = div("cellcontainer$(cell.id)", align = cell.outputs[4])
+    style!(newdiv, "padding" => 20px, "border-radius" => 0px)
+    if typeof(cell.outputs) <: AbstractString
+        if cell.outputs == ""
+            push!(newdiv, build_image_bar(c, cm, cell, proj))
+            return(newdiv)
+        end
+        outp_splits = split(cell.outputs, "!|")
+        cell.outputs = [string(outp_splits[1]), base64_to_image(outp_splits[2]), outp_splits[3], outp_spluts[4]]
+        cell.source = replace(cell.source, "# " => "")
+    end
+    img = base64img("cell$(cell.id)", cell.outputs[2], lowercase(cell.source))
+    img[:width] = cell.outputs[3]
     push!(newdiv, img)
     newdiv::Component{:div}
 end
@@ -234,7 +292,7 @@ function string(cell::Cell{:image})
     celltype::String = string(typeof(cell).parameters[1])
     fname = cell.outputs[1]
     image = image_to_base64(cell.outputs[2])
-    return(*("# $(cell.source)", "\n#==output[$celltype]\n$(fname)!|$image\n==#\n#==|||==#\n"))::String
+    return(*("# $(cell.source)", "\n#==output[$celltype]\n$(fname)!|$(image)!|$(cell.outputs[3])!|$(cell.outputs[4])\n==#\n#==|||==#\n"))::String
 end
 
 string(cell::Cell{:vimage}) = begin
