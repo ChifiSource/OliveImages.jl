@@ -7,7 +7,7 @@ using Olive.Toolips
 using Olive.Toolips.Components
 using Olive.ToolipsSession
 using Olive: getname, Project, Directory, Cell
-import Olive: build, olive_read, OliveExtension
+import Olive: build, olive_read, OliveExtension, string
 
 #== file cells
 ==#
@@ -33,7 +33,6 @@ function olive_read(cell::Cell{:png})
     img = load(cell.outputs)
     Vector{Cell{<:Any}}([Cell{:image}("PNG", [cell.source, img, "300", "left"])])::Vector{Cell{<:Any}}
 end
-
 
 function build(c::Connection, cell::Cell{:gif}, d::Directory{<:Any})
     base = Olive.build_base_cell(c, cell, d)
@@ -144,6 +143,11 @@ function image_detail_edit(c::AbstractConnection, cell::Cell{:image}, proj::Oliv
         remove!(cm, newbar)
         insert!(cm, "cellcontainer$(cell.id)", 1, newbar)
     end
+    on(c, backbutton, "click") do cm::ComponentModifier
+        newbar = build_image_bar(c, cm, cell, proj)
+        remove!(cm, newbar)
+        insert!(cm, "cellcontainer$(cell.id)", 1, newbar)
+    end
     style!(confbutton, "font-size" => 16pt, "margin-left" => 10px, "color" => "white")
     div("imgedit$cellid", children = [backbutton, namebox, nimps, confbutton])
 end
@@ -153,7 +157,12 @@ build_image_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection
     icon = buildbase_imgcell_button("openimg", cellid, "file_open")
     on(c, icon, "click") do cm::ComponentModifier
         on_ret = (cm::ComponentModifier, fpath) -> begin
-            alert!(cm, fpath)
+            fname = split(fpath, "/")[end]
+            ftype = split(fname, ".")[end]
+            cell.source = uppercase(string(ftype))
+            image = load(fpath)
+            cell.outputs = [fname, image, cell.outputs[3], cell.outputs[4]]
+            Components.update_base64!(cm, "cell$cellid", image, ftype)
         end
         fdialog = Olive.make_fselect_dialog(on_ret, c)
         append!(cm, "mainbody", fdialog)
