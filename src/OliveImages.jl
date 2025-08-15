@@ -117,10 +117,6 @@ function buildbase_imgcell_button(name::AbstractString, cellid::String, icon::St
     icon::Component{:span}
 end
 
-function build_fileseeker()
-
-end
-
 function image_detail_edit(c::AbstractConnection, cell::Cell{:image}, proj::Olive.Project)
     cellid = cell.id
     backbutton = Olive.topbar_icon("bac$cellid", "arrow_back")
@@ -156,7 +152,11 @@ build_image_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection
     cellid::String = cell.id
     icon = buildbase_imgcell_button("openimg", cellid, "file_open")
     on(c, icon, "click") do cm::ComponentModifier
-        
+        on_ret = (cm::ComponentModifier, fpath) -> begin
+            alert!(cm, fpath)
+        end
+        fdialog = Olive.make_fselect_dialog(on_ret, c)
+        append!(cm, "mainbody", fdialog)
     end
     icon
 end
