@@ -336,4 +336,14 @@ string(cell::Cell{:vimage}) = begin
     return(*("# svg image:", "\n#==output[vimage]\n$(cell.source)\n==#\n#==|||==#\n"))::String
 end
 
+function string(cell::Cell{:imagero})
+    fname = cell.outputs[1]
+    image = image_to_base64(cell.outputs[2])
+    return(*("# $(cell.source)", "\n#==output[image]\n$(fname)!|$(image)!|$(cell.outputs[3])!|$(cell.outputs[4])\n==#\n#==|||==#\n"))::String
+end
+
+string(cell::Cell{:vimagero}) = begin
+    return(*("# svg image:", "\n#==output[vimage]\n$(cell.source)\n==#\n#==|||==#\n"))::String
+end
+
 end # module OliveImages
