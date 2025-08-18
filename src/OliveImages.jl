@@ -24,6 +24,11 @@ build(c::Connection, cm::ComponentModifier, cell::Cell{:vimage}, proj::Project{<
 build(c::Connection, cm::ComponentModifier, cell::Cell{:image}, proj::Project{<:Any})
 string(cell::Cell{:image})
 string(cell::Cell{:vimage})
+build(c::Connection, cm::ComponentModifier, cell::Cell{:vimagero}, proj::Project{<:Any})
+build(c::Connection, cm::ComponentModifier, cell::Cell{:imagero}, proj::Project{<:Any})
+string(cell::Cell{:imagero})
+string(cell::Cell{:vimagero})
+
 
 # extensible `OliveImages` functions:
 build_image_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project)
@@ -98,12 +103,31 @@ function olive_read(cell::Cell{:jpg})
     Vector{Cell{<:Any}}([Cell{:image}("JPG", [cell.source, img, "300", "left"])])::Vector{Cell{<:Any}}
 end
 
+"""
+```julia
+base64_to_image(b64str, fmt::String = "PNG") -> ::Matrix{ColorType}
+```
+Loads raw base64 data back into an Image matrix.
+```julia
+```
+- See also: `image_to_base64`, `OliveImages`
+"""
 function base64_to_image(b64str, fmt::String = "PNG")
     data = Components.base64decode(b64str)
     io = IOBuffer(data)
     return load(Stream{DataFormat{Symbol(fmt)}}(io))
 end
 
+"""
+```julia
+image_to_base64(img, fmt::String = "PNG") -> ::String
+```
+Encodes an image object as `Base64`, or any object binded to `save(::IO, ::T)`. The 
+inverse of `base64_to_image`.
+```julia
+```
+- See also: `image_to_base64`, `OliveImages`
+"""
 function image_to_base64(img, fmt::String = "PNG")
     io = IOBuffer()
     save(Stream{DataFormat{Symbol(fmt)}}(io), img) # save in memory stream
@@ -184,12 +208,32 @@ function build(c::Connection, cm::ComponentModifier, cell::Cell{:imagero}, proj:
     newdiv::Component{:div}
 end
 
+"""
+```julia
+buildbase_imgcell_button(name::AbstractString, cellid::String, icon::String) -> ::Component{:span}
+```
+This `Function` is used internally by `OliveImages` to generate extension icons, but may also be useful in 
+creating extensions to this package.
+```julia
+```
+- See also: 
+"""
 function buildbase_imgcell_button(name::AbstractString, cellid::String, icon::String)
     icon = Olive.topbar_icon("$name$cellid", icon)
     style!(icon, "font-size" => 16pt, "color" => "white")
     icon::Component{:span}
 end
 
+"""
+```julia
+image_detail_edit(c::AbstractConnection, cell::Cell{:image}, proj::Olive.Project) -> ::Component{:div}
+```
+This `Function` is used internally by `OliveImages`. It is used by the `image` 
+cell and lets the end-user adjust the cell.
+```julia
+```
+- See also: 
+"""
 function image_detail_edit(c::AbstractConnection, cell::Cell{:image}, proj::Olive.Project)
     cellid = cell.id
     backbutton = Olive.topbar_icon("bac$cellid", "arrow_back")
@@ -214,7 +258,6 @@ function image_detail_edit(c::AbstractConnection, cell::Cell{:image}, proj::Oliv
         new_alignment = cm["alsel$cellid"]["value"]
         newname = cm["namebox$cellid"]["text"]
         cm["cell$cellid"] = "width" => newx
-        @warn new_alignment
         cm["cellcontainer$cellid"] = "align" => new_alignment
         cell.outputs[1] = newname
         cell.outputs[3] = newx
@@ -232,6 +275,17 @@ function image_detail_edit(c::AbstractConnection, cell::Cell{:image}, proj::Oliv
     div("imgedit$cellid", children = [backbutton, namebox, nimps, confbutton])
 end
 
+"""
+```julia
+build_image_cell_button(oe::Type{OliveExtension{<:Any}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project) -> ::Component{<:Any}
+```
+`build_image_cell_button`, like `build_vimage_cell_button`, is **an extensible function** 
+which is used to load new components into an image cell. These will appear as buttons in the 
+image edit bar, which can be bound to further expand `OliveImages` functionality.
+```julia
+```
+- See also: 
+"""
 build_image_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project) = begin
     cellid::String = cell.id
     icon = buildbase_imgcell_button("openimg", cellid, "file_open")
@@ -264,6 +318,17 @@ build_image_cell_button(oe::Type{OliveExtension{:resize}}, c::AbstractConnection
     icon
 end
 
+"""
+```julia
+build_vimage_cell_button(oe::Type{OliveExtension{<:Any}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project) -> ::Component{<:Any}
+```
+`build_vimage_cell_button`, like `build_image_cell_button`, is **an extensible function** 
+which is used to load new components into an vimage cell. These will appear as buttons in the 
+image edit bar, which can be bound to further expand `OliveImages` functionality.
+```julia
+```
+- See also: 
+"""
 build_vimage_cell_button(oe::Type{OliveExtension{:change}}, c::AbstractConnection, cell::Cell{<:Any}, proj::Olive.Project) = begin
     cellid::String = cell.id
     icon = buildbase_imgcell_button("openimg", cellid, "file_open")
