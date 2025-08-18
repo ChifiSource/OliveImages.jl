@@ -9,6 +9,17 @@ The `OliveImages` module provides [Olive](https://github.com/ChifiSource/Olive.j
 - PNG files
 - GIF files
 - and JPG files.
+```julia
+using Pkg
+
+Pkg.add("OliveImages"
+```
+- **note** `OliveImages` is an `Olive` extension; it requires [olive](https://github.com/ChifiSource/Olive.jl).
+
+Add this package to your `Olive` by loading it before entering headless mode, or adding it via the `:home` directory in `Olive`. Learn more at [installing extensions](https://chifidocs.com/olive/Olive/installing-extensions).
+```julia
+using OliveImages; using OliveImages.Olive; Olive.start(headless = true)
+```
 
 <div align="center">
 <img src="https://github.com/ChifiSource/image_dump/blob/main/olive/doc92sc/extimages.png"></img>
